@@ -2,6 +2,8 @@ import os
 import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+
 import requests
 from dotenv import load_dotenv
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -11,6 +13,7 @@ SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 SPOTIFY_SCOPE = os.getenv("SPOTIFY_SCOPE")
+GOOGLE_SCOPE = os.getenv("GOOGLE_SCOPE")
 
 class CallbackHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -49,5 +52,24 @@ def spotify_authenticate():
     print("waiting for spotify auth")
     server.handle_request()
 
+def google_authenticate(scopes):
+    client_secret_file = Path(__file__).parent / "client_secret.json"
+
+    flow = InstalledAppFlow.from_client_secrets_file(
+        "client_secret.json",
+        scopes=scopes
+    )
+
+    credentials = flow.run_local_server(
+        port = 8080,
+        prompt='consent',
+        access_type='offline'
+    )
+
+    return credentials
+
+
 if __name__ == "__main__":
+    credentials = google_authenticate(GOOGLE_SCOPE)
+    print(credentials)
     spotify_authenticate()
