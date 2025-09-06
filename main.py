@@ -3,6 +3,7 @@ import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+import googleapiclient.discovery
 
 import requests
 from dotenv import load_dotenv
@@ -68,8 +69,20 @@ def google_authenticate(scopes):
 
     return credentials
 
+def get_youtube_playlists(yt_credentials):
+    youtube = googleapiclient.discovery.build(
+        "youtube", "v3", credentials=yt_credentials
+    )
+    request = youtube.playlists().list(
+        part="snippet",
+        mine=True,
+        maxResults=50
+    )
+    response = request.execute()
+    playlists = response.get("items", [])
+    for playlist in playlists:
+        print(playlist["snippet"]["title"])
 
 if __name__ == "__main__":
     credentials = google_authenticate(GOOGLE_SCOPE)
-    print(credentials)
-    spotify_authenticate()
+    get_youtube_playlists(credentials)
