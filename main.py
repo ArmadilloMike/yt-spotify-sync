@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from google_auth_oauthlib.flow import InstalledAppFlow
 import time
 import re
+import argparse
 
 load_dotenv()
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
@@ -276,7 +277,7 @@ def add_tracks_to_spotify_playlist(playlist_id, track_ids, access_token):
 def sync_spotify_to_youtube(spotify_token, yt_credentials):
     spotify_playlists = get_spotify_playlists(spotify_token)
     selected_spotify = select_playlist(spotify_playlists, "Spotify")
-    song_names = get_song_names_spotify(selected_spotify, spotify_token)[:50]
+    song_names = get_song_names_spotify(selected_spotify, spotify_token)
 
     youtube = googleapiclient.discovery.build("youtube", "v3", credentials=yt_credentials)
     yt_playlists = youtube.playlists().list(part="snippet", mine=True, maxResults=50).execute().get("items", [])
@@ -296,7 +297,7 @@ def sync_youtube_to_spotify(yt_credentials, spotify_token):
     youtube = googleapiclient.discovery.build("youtube", "v3", credentials=yt_credentials)
     yt_playlists = youtube.playlists().list(part="snippet", mine=True, maxResults=50).execute().get("items", [])
     selected_yt = select_playlist(yt_playlists, "YouTube")
-    yt_song_names = get_song_names_youtube(selected_yt, yt_credentials)[:50]
+    yt_song_names = get_song_names_youtube(selected_yt, yt_credentials)
 
     # Get Spotify playlists and select one
     spotify_playlists = get_spotify_playlists(spotify_token)
@@ -318,7 +319,37 @@ def sync_youtube_to_spotify(yt_credentials, spotify_token):
         add_tracks_to_spotify_playlist(spotify_playlist_id, track_ids, spotify_token)
         print("Added tracks to Spotify playlist.")
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser(description="Sync playlists between Spotify and YouTube")
+    parser.add_argument(
+        "--direction",
+        choices=["yt-to-spotify", "spotify-to-yt"],
+        required=False,
+        help="Direction to sync: yt-to-spotify or spotify-to-yt"
+    )
+    args = parser.parse_args()
+
+    direction = args.direction
+    if not direction:
+        print("Select sync direction:")
+        print("1: YouTube to Spotify")
+        print("2: Spotify to YouTube")
+        choice = input("Enter 1 or 2: ").strip()
+        if choice == "1":
+            direction = "yt-to-spotify"
+        elif choice == "2":
+            direction = "spotify-to-yt"
+        else:
+            print("Invalid choice.")
+            return
+
     yt_credentials = google_authenticate([GOOGLE_SCOPE])
     spotify_token = spotify_authenticate()
-    sync_youtube_to_spotify(yt_credentials, spotify_token)
+
+    if direction == "yt-to-spotify":
+        sync_youtube_to_spotify(yt_credentials, spotify_token)
+    else:
+        sync_spotify_to_youtube(spotify_token, yt_credentials)
+
+if __name__ == "__main__":
+    main()
