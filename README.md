@@ -1,6 +1,8 @@
 # yt-spotify-sync
 A CLI to sync a YouTube and Spotify playlist to have the same songs
 
+# This is an old version updated version is avalible on branch main[https://github.com/ArmadilloMike/yt-spotify-sync/tree/main]
+
 ## Features
 
  - Sync the songs on your spotify playlist to youtube and vise versa 
